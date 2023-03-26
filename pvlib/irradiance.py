@@ -1257,7 +1257,7 @@ def clearness_index(ghi, solar_zenith, extra_radiation, min_cos_zenith=0.065,
     Calculate the clearness index.
 
     The clearness index is the ratio of global to extraterrestrial
-    irradiance on a horizontal plane [1]_.
+    irradiance on a horizontal plane [Maxwell1987]_.
 
     Parameters
     ----------
@@ -1287,7 +1287,7 @@ def clearness_index(ghi, solar_zenith, extra_radiation, min_cos_zenith=0.065,
 
     References
     ----------
-    .. [1] Maxwell, E. L., "A Quasi-Physical Model for Converting Hourly
+    .. [Maxwell1987] Maxwell, E. L., "A Quasi-Physical Model for Converting Hourly
            Global Horizontal to Direct Normal Insolation", Technical
            Report No. SERI/TR-215-3087, Golden, CO: Solar Energy Research
            Institute, 1987.
