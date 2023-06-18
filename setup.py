@@ -28,7 +28,7 @@ Documentation: http://pvlib-python.readthedocs.io
 Source code: https://github.com/pvlib/pvlib-python
 """
 
-DISTNAME = 'pvlib'
+DISTNAME = 'pvlib-etxe'
 LICENSE = 'BSD 3-Clause'
 AUTHOR = 'pvlib python Developers'
 MAINTAINER_EMAIL = 'pvlib-admin@googlegroups.com'
