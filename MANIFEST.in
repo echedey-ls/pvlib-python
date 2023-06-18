@@ -2,6 +2,9 @@ global-exclude */spa.c
 global-exclude */spa.h
 prune pvlib/spa_c_files/build
 
+# include tests excluded in installation (setup.py, 'PACKAGES')
+graft pvlib/tests
+
 prune docs/sphinx/build
 prune docs/sphinx/source/generated
 # all doc figures created by doc build

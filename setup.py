@@ -91,7 +91,9 @@ PROJECT_URLS = {
 # although to exclude "docs", "ci", etc., we include only names matching
 # the "pvlib*" glob.  Although note that "docs" does get added separately
 # via the MANIFEST.in spec.
-PACKAGES = find_namespace_packages(include=['pvlib*'])
+# tests are excluded to make the installation lighter, so they are also
+# included in MANIFEST.in for the source distribution.
+PACKAGES = find_namespace_packages(include=['pvlib*'], exclude=['pvlib/tests'])
 
 extensions = []
 
