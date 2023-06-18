@@ -93,7 +93,7 @@ PROJECT_URLS = {
 # via the MANIFEST.in spec.
 # tests are excluded to make the installation lighter, so they are also
 # included in MANIFEST.in for the source distribution.
-PACKAGES = find_namespace_packages(include=['pvlib*'], exclude=['tests'])
+PACKAGES = find_namespace_packages(include=['pvlib*'], exclude=['pvlib.tests'])
 
 extensions = []
 
