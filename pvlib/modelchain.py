@@ -17,7 +17,6 @@ from pvlib import (atmosphere, clearsky, inverter, pvsystem, solarposition,
                    temperature)
 import pvlib.irradiance  # avoid name conflict with full import
 from pvlib.pvsystem import _DC_MODEL_PARAMS
-from pvlib._deprecation import pvlibDeprecationWarning
 from pvlib.tools import _build_kwargs
 
 from pvlib._deprecation import deprecated
@@ -279,7 +278,7 @@ def _mcr_repr(obj):
     # scalar, None, other?
     return repr(obj)
 
-    
+
 # Type for fields that vary between arrays
 T = TypeVar('T')
 
@@ -548,7 +547,6 @@ class ModelChain:
         self.losses_model = losses_model
 
         self.results = ModelChainResult()
-
 
     @classmethod
     def with_pvwatts(cls, system, location,
