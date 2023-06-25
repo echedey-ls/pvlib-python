@@ -61,48 +61,48 @@ def get_cams(latitude, longitude, start, end, email, identifier='mcclear',
 
     Parameters
     ----------
-    latitude: float
+    latitude : float
         in decimal degrees, between -90 and 90, north is positive (ISO 19115)
     longitude : float
         in decimal degrees, between -180 and 180, east is positive (ISO 19115)
-    start: datetime like
+    start : datetime like
         First day of the requested period
-    end: datetime like
+    end : datetime like
         Last day of the requested period
-    email: str
+    email : str
         Email address linked to a SoDa account
-    identifier: {'mcclear', 'cams_radiation'}
+    identifier : {'mcclear', 'cams_radiation'}
         Specify whether to retrieve CAMS Radiation or McClear parameters
-    altitude: float, optional
+    altitude : float, optional
         Altitude in meters. If None, then the altitude is determined from the
         NASA SRTM database
-    time_step: str, {'1min', '15min', '1h', '1d', '1M'}, default: '1h'
+    time_step : str, {'1min', '15min', '1h', '1d', '1M'}, default: '1h'
         Time step of the time series, either 1 minute, 15 minute, hourly,
         daily, or monthly.
-    time_ref: str, {'UT', 'TST'}, default: 'UT'
+    time_ref : str, {'UT', 'TST'}, default: 'UT'
         'UT' (universal time) or 'TST' (True Solar Time)
-    verbose: boolean, default: False
+    verbose : boolean, default: False
         Verbose mode outputs additional parameters (aerosols). Only available
         for 1 minute and universal time. See [1]_ for parameter description.
-    integrated: boolean, default False
+    integrated : boolean, default False
         Whether to return radiation parameters as integrated values (Wh/m^2)
         or as average irradiance values (W/m^2) (pvlib preferred units)
-    label: {'right', 'left'}, default: None
+    label : {'right', 'left'}, default: None
         Which bin edge label to label time-step with. The default is 'left' for
         all time steps except for '1M' which has a default of 'right'.
-    map_variables: bool, default: True
+    map_variables : bool, default: True
         When true, renames columns of the DataFrame to pvlib variable names
         where applicable. See variable :const:`VARIABLE_MAP`.
-    server: str, default: :const:`pvlib.iotools.sodapro.URL`
+    server : str, default: :const:`pvlib.iotools.sodapro.URL`
         Base url of the SoDa Pro CAMS Radiation API.
     timeout : int, default: 30
         Time in seconds to wait for server response before timeout
 
     Returns
     -------
-    data: pandas.DataFrame
+    data : pandas.DataFrame
         Timeseries data, see Notes for columns
-    metadata: dict
+    metadata : dict
         Metadata of the requested time-series
 
     Notes
@@ -235,23 +235,23 @@ def parse_cams(fbuf, integrated=False, label=None, map_variables=True):
 
     Parameters
     ----------
-    fbuf: file-like object
+    fbuf : file-like object
         File-like object containing data to read.
-    integrated: boolean, default False
+    integrated : boolean, default False
         Whether to return radiation parameters as integrated values (Wh/m^2)
         or as average irradiance values (W/m^2) (pvlib preferred units)
-    label: {'right', 'left'}, default: None
+    label : {'right', 'left'}, default: None
         Which bin edge label to label time-step with. The default is 'left' for
         all time steps except for '1M' which has a default of 'right'.
-    map_variables: bool, default: True
+    map_variables : bool, default: True
         When true, renames columns of the Dataframe to pvlib variable names
         where applicable. See variable :const:`VARIABLE_MAP`.
 
     Returns
     -------
-    data: pandas.DataFrame
+    data : pandas.DataFrame
         Timeseries data from CAMS Radiation or McClear
-    metadata: dict
+    metadata : dict
         Metadata available in the file.
 
     See Also
@@ -336,24 +336,24 @@ def read_cams(filename, integrated=False, label=None, map_variables=True):
 
     Parameters
     ----------
-    filename: str
+    filename : str
         Filename of a file containing data to read.
-    integrated: boolean, default False
+    integrated : boolean, default False
         Whether to return radiation parameters as integrated values (Wh/m^2)
         or as average irradiance values (W/m^2) (pvlib preferred units)
-    label: {'right', 'left}, default: None
+    label : {'right', 'left}, default: None
         Which bin edge label to label time-step with. The default is 'left' for
         all time steps except for '1M' which has a default of 'right'.
-    map_variables: bool, default: True
+    map_variables : bool, default: True
         When true, renames columns of the Dataframe to pvlib variable names
         where applicable. See variable :const:`VARIABLE_MAP`.
 
     Returns
     -------
-    data: pandas.DataFrame
+    data : pandas.DataFrame
         Timeseries data from CAMS Radiation or McClear.
         See :func:`pvlib.iotools.get_cams` for fields.
-    metadata: dict
+    metadata : dict
         Metadata available in the file.
 
     See Also
