@@ -233,7 +233,6 @@ def read_epw(filename, coerce_year=None):
         with open(str(filename), 'r') as csvdata:
             data, meta = parse_epw(csvdata, coerce_year)
 
-
     return data, meta
 
 

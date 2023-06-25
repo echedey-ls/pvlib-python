@@ -467,6 +467,7 @@ def sum_mult_cos_add_mult(arr, x):
         s += arr[row, 0] * np.cos(arr[row, 1] + arr[row, 2] * x)
     return s
 
+
 @jcompile('float64(float64)', nopython=True)
 def heliocentric_longitude(jme):
     l0 = sum_mult_cos_add_mult(L0, jme)
@@ -480,6 +481,7 @@ def heliocentric_longitude(jme):
              l5 * jme**5)/10**8
     l = np.rad2deg(l_rad)
     return l % 360
+
 
 @jcompile('float64(float64)', nopython=True)
 def heliocentric_latitude(jme):

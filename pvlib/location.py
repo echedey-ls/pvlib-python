@@ -14,6 +14,7 @@ import h5py
 from pvlib import solarposition, clearsky, atmosphere, irradiance
 from pvlib.tools import _degrees_to_index
 
+
 class Location:
     """
     Location objects are convenient containers for latitude, longitude,
