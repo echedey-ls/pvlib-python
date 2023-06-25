@@ -11,8 +11,7 @@ from pvlib.iotools import get_pvgis_tmy, read_pvgis_tmy
 from pvlib.iotools import get_pvgis_hourly, read_pvgis_hourly
 from pvlib.iotools import get_pvgis_horizon
 from ..conftest import (DATA_DIR, RERUNS, RERUNS_DELAY, assert_frame_equal,
-                        fail_on_pvlib_version, assert_series_equal)
-from pvlib._deprecation import pvlibDeprecationWarning
+                        assert_series_equal)
 
 
 # PVGIS Hourly tests

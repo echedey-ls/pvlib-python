@@ -6,7 +6,6 @@ from numpy.testing import assert_allclose
 
 from pvlib.ivtools import sdm
 from pvlib import pvsystem
-from pvlib._deprecation import pvlibDeprecationWarning
 
 from pvlib.tests.conftest import requires_pysam, requires_statsmodels
 

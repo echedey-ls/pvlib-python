@@ -20,8 +20,6 @@ from pathlib import Path
 import requests
 import pandas as pd
 from pvlib.iotools import read_epw, parse_epw
-import warnings
-from pvlib._deprecation import pvlibDeprecationWarning
 
 URL = 'https://re.jrc.ec.europa.eu/api/'
 
