@@ -1123,13 +1123,13 @@ def _update_rsh_fixed_pt(vmp, imp, iph, io, rs, rsh, nnsvth):
 
     Parameters
     ----------
-    vmp : a numpy array of length N of values for Vmp (V)
-    imp : a numpy array of length N of values for Imp (A)
-    iph : a numpy array of length N of values for light current IL (A)
-    io : a numpy array of length N of values for Io (A)
-    rs : a numpy array of length N of values for series resistance (ohm)
-    rsh : a numpy array of length N of initial values for shunt resistance (ohm)
-    nnsvth : a numpy array length N of values for the diode factor x thermal
+    vmp : numpy array of length N of values for Vmp (V)
+    imp : numpy array of length N of values for Imp (A)
+    iph : numpy array of length N of values for light current IL (A)
+    io : numpy array of length N of values for Io (A)
+    rs : numpy array of length N of values for series resistance (ohm)
+    rsh : numpy array of length N of initial values for shunt resistance (ohm)
+    nnsvth : numpy array length N of values for the diode factor x thermal
             voltage for the module, equal to Ns (number of cells in series) x
             Vth (thermal voltage per cell).
 

@@ -410,9 +410,11 @@ NUTATION_YTERM_ARRAY = np.array([
 @jcompile('float64(int64, int64, int64, int64, int64, int64, int64)',
           nopython=True)
 def julian_day_dt(year, month, day, hour, minute, second, microsecond):
-    """This is the original way to calculate the julian day from the NREL paper.
+    """
+    This is the original way to calculate the julian day from the NREL paper.
     However, it is much faster to convert to unix/epoch time and then convert
-    to julian day. Note that the date must be UTC."""
+    to julian day. Note that the date must be UTC.
+    """
     if month <= 2:
         year = year-1
         month = month+12
@@ -1045,7 +1047,8 @@ def solar_position(unixtime, lat, lon, elev, pressure, temp, delta_t,
     unixtime : numpy array
         Array of unix/epoch timestamps to calculate solar position for.
         Unixtime is the number of seconds since Jan. 1, 1970 00:00:00 UTC.
-        A pandas.DatetimeIndex is easily converted using .astype(np.int64)/10**9
+        A pandas.DatetimeIndex is easily converted using
+        ``.astype(np.int64)/10**9``
     lat : float
         Latitude to calculate solar position for
     lon : float
@@ -1224,7 +1227,8 @@ def earthsun_distance(unixtime, delta_t, numthreads):
     unixtime : numpy array
         Array of unix/epoch timestamps to calculate solar position for.
         Unixtime is the number of seconds since Jan. 1, 1970 00:00:00 UTC.
-        A pandas.DatetimeIndex is easily converted using .astype(np.int64)/10**9
+        A pandas.DatetimeIndex is easily converted using
+        ``.astype(np.int64)/10**9``
     delta_t : float
         Difference between terrestrial time and UT. USNO has tables.
     numthreads : int
