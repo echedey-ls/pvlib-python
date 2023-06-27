@@ -279,7 +279,7 @@ def _mcr_repr(obj):
     # scalar, None, other?
     return repr(obj)
 
-    
+
 # Type for fields that vary between arrays
 T = TypeVar('T')
 
@@ -548,7 +548,6 @@ class ModelChain:
         self.losses_model = losses_model
 
         self.results = ModelChainResult()
-
 
     @classmethod
     def with_pvwatts(cls, system, location,
