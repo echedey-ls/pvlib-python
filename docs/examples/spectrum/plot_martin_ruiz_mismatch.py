@@ -49,7 +49,7 @@ pvgis_data, _, metadata, _ = pvlib.iotools.read_pvgis_tmy(datapath,
 site = pvlib.location.Location(metadata['latitude'], metadata['longitude'],
                                altitude=metadata['elevation'])
 
-# Coerce a year: above function returns typical months of different years
+# Coerce a year: function above returns typical months of different years
 pvgis_data.index = [ts.replace(year=2022) for ts in pvgis_data.index]
 # Select days to show
 weather_data = pvgis_data['2022-09-03':'2022-09-06']
@@ -76,6 +76,16 @@ aoi = pvlib.irradiance.aoi(surface_tilt, surface_azimuth,
 poa_irrad = pvlib.irradiance.poa_components(aoi, weather_data['dni'],
                                             poa_sky_diffuse,
                                             poa_ground_diffuse)
+
+# Apply Martin & Ruiz IAM modifiers
+iam_direct = pvlib.iam.martin_ruiz(aoi)
+iam_sky_diffuse, iam_ground_diffuse = \
+    pvlib.iam.martin_ruiz_diffuse(surface_tilt)
+
+poa_irrad['poa_direct'] = poa_irrad['poa_direct'] * iam_direct
+poa_irrad['poa_sky_diffuse'] = poa_irrad['poa_sky_diffuse'] * iam_sky_diffuse
+poa_irrad['poa_ground_diffuse'] = (poa_irrad['poa_ground_diffuse']
+                                   * iam_ground_diffuse)
 
 # %%
 # Here come the modifiers. Let's calculate them with the airmass and clearness
@@ -134,8 +144,8 @@ plt.grid()
 plt.show()
 
 # %%
-# Comparison with other models
-# ----------------------------
+# Comparison against other models
+# -------------------------------
 # During the addition of this model, a question arose about its trustworthiness
 # so, in order to check the integrity of the implementation, we will
 # compare it against :py:func:`pvlib.pvsystem.sapm_spectral_loss` and
