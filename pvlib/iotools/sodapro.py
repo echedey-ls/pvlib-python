@@ -9,6 +9,8 @@ import io
 import warnings
 
 
+URL = 'api.soda-solardata.com'
+
 CAMS_INTEGRATED_COLUMNS = [
     'TOA', 'Clear sky GHI', 'Clear sky BHI', 'Clear sky DHI', 'Clear sky BNI',
     'GHI', 'BHI', 'DHI', 'BNI',
@@ -44,9 +46,10 @@ SUMMATION_PERIOD_TO_TIME_STEP = {'0 year 0 month 0 day 0 h 1 min 0 s': '1min',
 def get_cams(latitude, longitude, start, end, email, identifier='mcclear',
              altitude=None, time_step='1h', time_ref='UT', verbose=False,
              integrated=False, label=None, map_variables=True,
-             server='www.soda-is.com', timeout=30):
-    """
-    Retrieve time-series of radiation and/or clear-sky global, beam, and
+             server=URL, timeout=30):
+    """Retrieve irradiance and clear-sky time series from CAMS.
+
+    Time-series of radiation and/or clear-sky global, beam, and
     diffuse radiation from CAMS (see [1]_). Data is retrieved from SoDa [2]_.
 
     Time coverage: 2004-01-01 to two days ago
@@ -63,9 +66,9 @@ def get_cams(latitude, longitude, start, end, email, identifier='mcclear',
         in decimal degrees, between -90 and 90, north is positive (ISO 19115)
     longitude : float
         in decimal degrees, between -180 and 180, east is positive (ISO 19115)
-    start: datetime like
+    start: datetime-like
         First day of the requested period
-    end: datetime like
+    end: datetime-like
         Last day of the requested period
     email: str
         Email address linked to a SoDa account
@@ -91,8 +94,8 @@ def get_cams(latitude, longitude, start, end, email, identifier='mcclear',
     map_variables: bool, default: True
         When true, renames columns of the DataFrame to pvlib variable names
         where applicable. See variable :const:`VARIABLE_MAP`.
-    server: str, default: 'www.soda-is.com'
-        Main server (www.soda-is.com) or backup mirror server (pro.soda-is.com)
+    server: str, default: :const:`pvlib.iotools.sodapro.URL`
+        Base url of the SoDa Pro CAMS Radiation API.
     timeout : int, default: 30
         Time in seconds to wait for server response before timeout
 
@@ -175,8 +178,8 @@ def get_cams(latitude, longitude, start, end, email, identifier='mcclear',
         altitude = -999
 
     # Start and end date should be in the format: yyyy-mm-dd
-    start = start.strftime('%Y-%m-%d')
-    end = end.strftime('%Y-%m-%d')
+    start = pd.to_datetime(start).strftime('%Y-%m-%d')
+    end = pd.to_datetime(end).strftime('%Y-%m-%d')
 
     email = email.replace('@', '%2540')  # Format email address
     identifier = 'get_{}'.format(identifier.lower())  # Format identifier str
@@ -344,13 +347,13 @@ def read_cams(filename, integrated=False, label=None, map_variables=True):
         all time steps except for '1M' which has a default of 'right'.
     map_variables: bool, default: True
         When true, renames columns of the Dataframe to pvlib variable names
-        where applicable. See variable VARIABLE_MAP.
+        where applicable. See variable :const:`VARIABLE_MAP`.
 
     Returns
     -------
     data: pandas.DataFrame
-        Timeseries data from CAMS Radiation or McClear
-        :func:`pvlib.iotools.get_cams` for fields
+        Timeseries data from CAMS Radiation or McClear.
+        See :func:`pvlib.iotools.get_cams` for fields.
     metadata: dict
         Metadata available in the file.
 

@@ -14,11 +14,9 @@ from dataclasses import dataclass, field
 from typing import Union, Tuple, Optional, TypeVar
 
 from pvlib import (atmosphere, clearsky, inverter, pvsystem, solarposition,
-                   temperature, tools)
-from pvlib.tracking import SingleAxisTracker
+                   temperature, iam)
 import pvlib.irradiance  # avoid name conflict with full import
 from pvlib.pvsystem import _DC_MODEL_PARAMS
-from pvlib._deprecation import pvlibDeprecationWarning
 from pvlib.tools import _build_kwargs
 
 from pvlib._deprecation import deprecated
@@ -254,6 +252,33 @@ def get_orientation(strategy, **kwargs):
     return surface_tilt, surface_azimuth
 
 
+def _getmcattr(self, attr):
+    """
+    Helper for __repr__ methods, needed to avoid recursion in property
+    lookups
+    """
+    out = getattr(self, attr)
+    try:
+        out = out.__name__
+    except AttributeError:
+        pass
+    return out
+
+
+def _mcr_repr(obj):
+    '''
+    Helper for ModelChainResult.__repr__
+    '''
+    if isinstance(obj, tuple):
+        return "Tuple (" + ", ".join([_mcr_repr(o) for o in obj]) + ")"
+    if isinstance(obj, pd.DataFrame):
+        return "DataFrame ({} rows x {} columns)".format(*obj.shape)
+    if isinstance(obj, pd.Series):
+        return "Series (length {})".format(len(obj))
+    # scalar, None, other?
+    return repr(obj)
+
+
 # Type for fields that vary between arrays
 T = TypeVar('T')
 
@@ -385,6 +410,33 @@ class ModelChainResult:
             value = self._result_type(value)
         super().__setattr__(key, value)
 
+    def __repr__(self):
+        mc_attrs = dir(self)
+
+        def _head(obj):
+            try:
+                return obj[:3]
+            except:
+                return obj
+
+        if type(self.dc) is tuple:
+            num_arrays = len(self.dc)
+        else:
+            num_arrays = 1
+
+        desc1 = ('=== ModelChainResult === \n')
+        desc2 = (f'Number of Arrays: {num_arrays} \n')
+        attr = 'times'
+        desc3 = ('times (first 3)\n' +
+                 f'{_head(_getmcattr(self, attr))}' +
+                 '\n')
+        lines = []
+        for attr in mc_attrs:
+            if not (attr.startswith('_') or attr=='times'):
+                lines.append(f' {attr}: ' + _mcr_repr(getattr(self, attr)))
+        desc4 = '\n'.join(lines)
+        return (desc1 + desc2 + desc3 + desc4)
+
 
 class ModelChain:
     """
@@ -437,7 +489,7 @@ class ModelChain:
         If None, the model will be inferred from the parameters that
         are common to all of system.arrays[i].module_parameters.
         Valid strings are 'physical', 'ashrae', 'sapm', 'martin_ruiz',
-        'no_loss'. The ModelChain instance will be passed as the
+        'interp' and 'no_loss'. The ModelChain instance will be passed as the
         first argument to a user-defined function.
 
     spectral_model: None, str, or function, default None
@@ -464,13 +516,6 @@ class ModelChain:
     name: None or str, default None
         Name of ModelChain instance.
     """
-
-    # list of deprecated attributes
-    _deprecated_attrs = ['solar_position', 'airmass', 'total_irrad',
-                         'aoi', 'aoi_modifier', 'spectral_modifier',
-                         'cell_temperature', 'effective_irradiance',
-                         'dc', 'ac', 'diode_params', 'tracking',
-                         'weather', 'times', 'losses']
 
     def __init__(self, system, location,
                  clearsky_model='ineichen',
@@ -503,26 +548,6 @@ class ModelChain:
 
         self.results = ModelChainResult()
 
-    def __getattr__(self, key):
-        if key in ModelChain._deprecated_attrs:
-            msg = f'ModelChain.{key} is deprecated and will' \
-                  f' be removed in v0.10. Use' \
-                  f' ModelChain.results.{key} instead'
-            warnings.warn(msg, pvlibDeprecationWarning)
-            return getattr(self.results, key)
-        # __getattr__ is only called if __getattribute__ fails.
-        # In that case we should check if key is a deprecated attribute,
-        # and fail with an AttributeError if it is not.
-        raise AttributeError
-
-    def __setattr__(self, key, value):
-        if key in ModelChain._deprecated_attrs:
-            msg = f'ModelChain.{key} is deprecated from v0.9. Use' \
-                  f' ModelChain.results.{key} instead'
-            warnings.warn(msg, pvlibDeprecationWarning)
-            setattr(self.results, key, value)
-        else:
-            super().__setattr__(key, value)
 
     @classmethod
     def with_pvwatts(cls, system, location,
@@ -560,7 +585,7 @@ class ModelChain:
         Examples
         --------
         >>> module_parameters = dict(gamma_pdc=-0.003, pdc0=4500)
-        >>> inverter_parameters = dict(pac0=4000)
+        >>> inverter_parameters = dict(pdc0=4000)
         >>> tparams = TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
         >>> system = PVSystem(surface_tilt=30, surface_azimuth=180,
         ...     module_parameters=module_parameters,
@@ -678,18 +703,8 @@ class ModelChain:
             'airmass_model', 'dc_model', 'ac_model', 'aoi_model',
             'spectral_model', 'temperature_model', 'losses_model'
         ]
-
-        def getmcattr(self, attr):
-            """needed to avoid recursion in property lookups"""
-            out = getattr(self, attr)
-            try:
-                out = out.__name__
-            except AttributeError:
-                pass
-            return out
-
         return ('ModelChain: \n  ' + '\n  '.join(
-            f'{attr}: {getmcattr(self, attr)}' for attr in attrs))
+            f'{attr}: {_getmcattr(self, attr)}' for attr in attrs))
 
     @property
     def dc_model(self):
@@ -901,6 +916,8 @@ class ModelChain:
                 self._aoi_model = self.sapm_aoi_loss
             elif model == 'martin_ruiz':
                 self._aoi_model = self.martin_ruiz_aoi_loss
+            elif model == 'interp':
+                self._aoi_model = self.interp_aoi_loss
             elif model == 'no_loss':
                 self._aoi_model = self.no_aoi_loss
             else:
@@ -912,22 +929,24 @@ class ModelChain:
         module_parameters = tuple(
             array.module_parameters for array in self.system.arrays)
         params = _common_keys(module_parameters)
-        if {'K', 'L', 'n'} <= params:
+        if iam._IAM_MODEL_PARAMS['physical'] <= params:
             return self.physical_aoi_loss
-        elif {'B5', 'B4', 'B3', 'B2', 'B1', 'B0'} <= params:
+        elif iam._IAM_MODEL_PARAMS['sapm'] <= params:
             return self.sapm_aoi_loss
-        elif {'b'} <= params:
+        elif iam._IAM_MODEL_PARAMS['ashrae'] <= params:
             return self.ashrae_aoi_loss
-        elif {'a_r'} <= params:
+        elif iam._IAM_MODEL_PARAMS['martin_ruiz'] <= params:
             return self.martin_ruiz_aoi_loss
+        elif iam._IAM_MODEL_PARAMS['interp'] <= params:
+            return self.interp_aoi_loss
         else:
             raise ValueError('could not infer AOI model from '
                              'system.arrays[i].module_parameters. Check that '
                              'the module_parameters for all Arrays in '
-                             'system.arrays contain parameters for '
-                             'the physical, aoi, ashrae or martin_ruiz model; '
-                             'explicitly set the model with the aoi_model '
-                             'kwarg; or set aoi_model="no_loss".')
+                             'system.arrays contain parameters for the '
+                             'physical, aoi, ashrae, martin_ruiz or interp '
+                             'model; explicitly set the model with the '
+                             'aoi_model kwarg; or set aoi_model="no_loss".')
 
     def ashrae_aoi_loss(self):
         self.results.aoi_modifier = self.system.get_iam(
@@ -953,6 +972,13 @@ class ModelChain:
     def martin_ruiz_aoi_loss(self):
         self.results.aoi_modifier = self.system.get_iam(
             self.results.aoi, iam_model='martin_ruiz'
+        )
+        return self
+
+    def interp_aoi_loss(self):
+        self.results.aoi_modifier = self.system.get_iam(
+            self.results.aoi,
+            iam_model='interp'
         )
         return self
 
@@ -1535,27 +1561,11 @@ class ModelChain:
         self._prep_inputs_solar_pos(weather)
         self._prep_inputs_airmass()
         self._prep_inputs_albedo(weather)
+        self._prep_inputs_fixed()
 
-        # PVSystem.get_irradiance and SingleAxisTracker.get_irradiance
-        # and PVSystem.get_aoi and SingleAxisTracker.get_aoi
-        # have different method signatures. Use partial to handle
-        # the differences.
-        if isinstance(self.system, SingleAxisTracker):
-            self._prep_inputs_tracking()
-            get_irradiance = partial(
-                self.system.get_irradiance,
-                self.results.tracking['surface_tilt'],
-                self.results.tracking['surface_azimuth'],
-                self.results.solar_position['apparent_zenith'],
-                self.results.solar_position['azimuth'])
-        else:
-            self._prep_inputs_fixed()
-            get_irradiance = partial(
-                self.system.get_irradiance,
-                self.results.solar_position['apparent_zenith'],
-                self.results.solar_position['azimuth'])
-
-        self.results.total_irrad = get_irradiance(
+        self.results.total_irrad = self.system.get_irradiance(
+            self.results.solar_position['apparent_zenith'],
+            self.results.solar_position['azimuth'],
             _tuple_from_dfs(self.results.weather, 'dni'),
             _tuple_from_dfs(self.results.weather, 'ghi'),
             _tuple_from_dfs(self.results.weather, 'dhi'),
@@ -1636,10 +1646,7 @@ class ModelChain:
         self._prep_inputs_solar_pos(data)
         self._prep_inputs_airmass()
 
-        if isinstance(self.system, SingleAxisTracker):
-            self._prep_inputs_tracking()
-        else:
-            self._prep_inputs_fixed()
+        self._prep_inputs_fixed()
 
         return self
 
@@ -1686,7 +1693,7 @@ class ModelChain:
             self.temperature_model()
         return self
 
-    def _prepare_temperature(self, data=None):
+    def _prepare_temperature(self, data):
         """
         Sets cell_temperature using inputs in data and the specified
         temperature model.
@@ -1699,7 +1706,7 @@ class ModelChain:
 
         Parameters
         ----------
-        data : DataFrame, default None
+        data : DataFrame
             May contain columns ``'cell_temperature'`` or
             ``'module_temperaure'``.
 
@@ -1878,13 +1885,13 @@ class ModelChain:
 
         return self
 
-    def _run_from_effective_irrad(self, data=None):
+    def _run_from_effective_irrad(self, data):
         """
         Executes the temperature, DC, losses and AC models.
 
         Parameters
         ----------
-        data : DataFrame, or tuple of DataFrame, default None
+        data : DataFrame, or tuple of DataFrame
             If optional column ``'cell_temperature'`` is provided, these values
             are used instead of `temperature_model`. If optional column
             `module_temperature` is provided, `temperature_model` must be
@@ -1907,7 +1914,7 @@ class ModelChain:
 
         return self
 
-    def run_model_from_effective_irradiance(self, data=None):
+    def run_model_from_effective_irradiance(self, data):
         """
         Run the model starting with effective irradiance in the plane of array.
 

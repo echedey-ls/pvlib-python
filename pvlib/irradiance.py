@@ -1481,24 +1481,24 @@ def _disc_kn(clearness_index, airmass, max_airmass=12):
 
     am = np.minimum(am, max_airmass)  # GH 450
 
-    # powers of kt will be used repeatedly, so compute only once
-    kt2 = kt * kt  # about the same as kt ** 2
-    kt3 = kt2 * kt  # 5-10x faster than kt ** 3
-
-    bools = (kt <= 0.6)
-    a = np.where(bools,
-                 0.512 - 1.56*kt + 2.286*kt2 - 2.222*kt3,
-                 -5.743 + 21.77*kt - 27.49*kt2 + 11.56*kt3)
-    b = np.where(bools,
-                 0.37 + 0.962*kt,
-                 41.4 - 118.5*kt + 66.05*kt2 + 31.9*kt3)
-    c = np.where(bools,
-                 -0.28 + 0.932*kt - 2.048*kt2,
-                 -47.01 + 184.2*kt - 222.0*kt2 + 73.81*kt3)
+    is_cloudy = (kt <= 0.6)
+    # Use Horner's method to compute polynomials efficiently
+    a = np.where(
+        is_cloudy,
+        0.512 + kt*(-1.56 + kt*(2.286 - 2.222*kt)),
+        -5.743 + kt*(21.77 + kt*(-27.49 + 11.56*kt)))
+    b = np.where(
+        is_cloudy,
+        0.37 + 0.962*kt,
+        41.4 + kt*(-118.5 + kt*(66.05 + 31.9*kt)))
+    c = np.where(
+        is_cloudy,
+        -0.28 + kt*(0.932 - 2.048*kt),
+        -47.01 + kt*(184.2 + kt*(-222.0 + 73.81*kt)))
 
     delta_kn = a + b * np.exp(c*am)
 
-    Knc = 0.866 - 0.122*am + 0.0121*am**2 - 0.000653*am**3 + 1.4e-05*am**4
+    Knc = 0.866 + am*(-0.122 + am*(0.0121 + am*(-0.000653 + 1.4e-05*am)))
     Kn = Knc - delta_kn
     return Kn, am
 
@@ -2227,6 +2227,8 @@ def erbs(ghi, zenith, datetime_or_doy, min_cos_zenith=0.065, max_zenith=87):
     --------
     dirint
     disc
+    orgill_hollands
+    boland
     """
 
     dni_extra = get_extra_radiation(datetime_or_doy)
@@ -2250,6 +2252,328 @@ def erbs(ghi, zenith, datetime_or_doy, min_cos_zenith=0.065, max_zenith=87):
 
     dni = (ghi - dhi) / tools.cosd(zenith)
     bad_values = (zenith > max_zenith) | (ghi < 0) | (dni < 0)
+    dni = np.where(bad_values, 0, dni)
+    # ensure that closure relationship remains valid
+    dhi = np.where(bad_values, ghi, dhi)
+
+    data = OrderedDict()
+    data['dni'] = dni
+    data['dhi'] = dhi
+    data['kt'] = kt
+
+    if isinstance(datetime_or_doy, pd.DatetimeIndex):
+        data = pd.DataFrame(data, index=datetime_or_doy)
+
+    return data
+
+
+def erbs_driesse(ghi, zenith, datetime_or_doy=None, dni_extra=None,
+                 min_cos_zenith=0.065, max_zenith=87):
+    r"""
+    Estimate DNI and DHI from GHI using the continuous Erbs-Driesse model.
+
+    The Erbs-Driesse model [1]_ is a reformulation of the original Erbs
+    model [2]_ that provides continuity of the function and its first
+    derivative at the two transition points.
+
+    .. math::
+
+        DHI = DF \times GHI
+
+    DNI is then estimated as
+
+    .. math::
+
+        DNI = (GHI - DHI)/\cos(Z)
+
+    where Z is the zenith angle.
+
+    Parameters
+    ----------
+    ghi: numeric
+        Global horizontal irradiance in W/m^2.
+    zenith: numeric
+        True (not refraction-corrected) zenith angles in decimal degrees.
+    datetime_or_doy : int, float, array, pd.DatetimeIndex, default None
+        Day of year or array of days of year e.g.
+        pd.DatetimeIndex.dayofyear, or pd.DatetimeIndex.
+        Either datetime_or_doy or dni_extra must be provided.
+    dni_extra : numeric, default None
+        Extraterrestrial normal irradiance.
+        dni_extra can be provided if available to avoid recalculating it
+        inside this function.  In this case datetime_or_doy is not required.
+    min_cos_zenith : numeric, default 0.065
+        Minimum value of cos(zenith) to allow when calculating global
+        clearness index `kt`. Equivalent to zenith = 86.273 degrees.
+    max_zenith : numeric, default 87
+        Maximum value of zenith to allow in DNI calculation. DNI will be
+        set to 0 for times with zenith values greater than `max_zenith`.
+
+    Returns
+    -------
+    data : OrderedDict or DataFrame
+        Contains the following keys/columns:
+
+            * ``dni``: the modeled direct normal irradiance in W/m^2.
+            * ``dhi``: the modeled diffuse horizontal irradiance in
+              W/m^2.
+            * ``kt``: Ratio of global to extraterrestrial irradiance
+              on a horizontal plane.
+
+    Raises
+    ------
+    ValueError
+        If neither datetime_or_doy nor dni_extra is provided.
+
+    Notes
+    -----
+    The diffuse fraction DHI/GHI of the Erbs-Driesse model deviates from the
+    original Erbs model by less than 0.0005.
+
+    References
+    ----------
+    .. [1] A. Driesse, A. Jensen, R. Perez, A Continuous Form of the Perez
+        Diffuse Sky Model for Forward and Reverse Transposition, forthcoming.
+
+    .. [2] D. G. Erbs, S. A. Klein and J. A. Duffie, Estimation of the
+       diffuse radiation fraction for hourly, daily and monthly-average
+       global radiation, Solar Energy 28(4), pp 293-302, 1982. Eq. 1
+
+    See also
+    --------
+    erbs
+    dirint
+    disc
+    orgill_hollands
+    boland
+    """
+    # central polynomial coefficients with float64 precision
+    p = [+12.26911439571261000,
+         -16.47050842469730700,
+         +04.24692671521831700,
+         -00.11390583806313881,
+         +00.94629663357100100]
+
+    if datetime_or_doy is None and dni_extra is None:
+        raise ValueError('Either datetime_or_doy or dni_extra '
+                         'must be provided.')
+
+    if dni_extra is None:
+        dni_extra = get_extra_radiation(datetime_or_doy)
+
+    # negative ghi should not reach this point, but just in case
+    ghi = np.maximum(0, ghi)
+
+    kt = clearness_index(ghi, zenith, dni_extra, min_cos_zenith=min_cos_zenith,
+                         max_clearness_index=1)
+
+    # For all Kt, set the default diffuse fraction
+    df = 1 - 0.09 * kt
+
+    # For Kt > 0.216, update the diffuse fraction
+    df = np.where(kt > 0.216, np.polyval(p, kt), df)
+
+    # For Kt > 0.792, update the diffuse fraction again
+    df = np.where(kt > 0.792, 0.165, df)
+
+    dhi = df * ghi
+
+    dni = (ghi - dhi) / tools.cosd(zenith)
+    bad_values = (zenith > max_zenith) | (ghi < 0) | (dni < 0)
+    dni = np.where(bad_values, 0, dni)
+    # ensure that closure relationship remains valid
+    dhi = np.where(bad_values, ghi, dhi)
+
+    data = OrderedDict()
+    data['dni'] = dni
+    data['dhi'] = dhi
+    data['kt'] = kt
+
+    if isinstance(datetime_or_doy, pd.DatetimeIndex):
+        data = pd.DataFrame(data, index=datetime_or_doy)
+    elif isinstance(ghi, pd.Series):
+        data = pd.DataFrame(data, index=ghi.index)
+
+    return data
+
+
+def orgill_hollands(ghi, zenith, datetime_or_doy, dni_extra=None,
+                    min_cos_zenith=0.065, max_zenith=87):
+    """Estimate DNI and DHI from GHI using the Orgill and Hollands model.
+
+    The Orgill and Hollands model [1]_ estimates the diffuse fraction DF from
+    global horizontal irradiance through an empirical relationship between
+    hourly DF observations (in Toronto, Canada) and the ratio of GHI to
+    extraterrestrial irradiance, Kt.
+
+    Parameters
+    ----------
+    ghi: numeric
+        Global horizontal irradiance in W/m^2.
+    zenith: numeric
+        True (not refraction-corrected) zenith angles in decimal degrees.
+    datetime_or_doy : int, float, array, pd.DatetimeIndex
+        Day of year or array of days of year e.g.
+        pd.DatetimeIndex.dayofyear, or pd.DatetimeIndex.
+    dni_extra : None or numeric, default None
+        Extraterrestrial direct normal irradiance. [W/m2]
+    min_cos_zenith : numeric, default 0.065
+        Minimum value of cos(zenith) to allow when calculating global
+        clearness index `kt`. Equivalent to zenith = 86.273 degrees.
+    max_zenith : numeric, default 87
+        Maximum value of zenith to allow in DNI calculation. DNI will be
+        set to 0 for times with zenith values greater than `max_zenith`.
+
+    Returns
+    -------
+    data : OrderedDict or DataFrame
+        Contains the following keys/columns:
+
+            * ``dni``: the modeled direct normal irradiance in W/m^2.
+            * ``dhi``: the modeled diffuse horizontal irradiance in
+              W/m^2.
+            * ``kt``: Ratio of global to extraterrestrial irradiance
+              on a horizontal plane.
+
+    References
+    ----------
+    .. [1] Orgill, J.F., Hollands, K.G.T., Correlation equation for hourly
+      diffuse radiation on a horizontal surface, Solar Energy 19(4), pp 357–359,
+      1977. Eqs. 3(a), 3(b) and 3(c)
+      :doi:`10.1016/0038-092X(77)90006-8`
+
+    See Also
+    --------
+    dirint
+    disc
+    erbs
+    boland
+    """
+    if dni_extra is None:
+        dni_extra = get_extra_radiation(datetime_or_doy)
+
+    kt = clearness_index(ghi, zenith, dni_extra, min_cos_zenith=min_cos_zenith,
+                         max_clearness_index=1)
+
+    # For Kt < 0.35, set the diffuse fraction
+    df = 1 - 0.249*kt
+
+    # For Kt >= 0.35 and Kt <= 0.75, set the diffuse fraction
+    df = np.where((kt >= 0.35) & (kt <= 0.75),
+                  1.557 - 1.84*kt, df)
+
+    # For Kt > 0.75, set the diffuse fraction
+    df = np.where(kt > 0.75, 0.177, df)
+
+    dhi = df * ghi
+
+    dni = (ghi - dhi) / tools.cosd(zenith)
+    bad_values = (zenith > max_zenith) | (ghi < 0) | (dni < 0)
+    dni = np.where(bad_values, 0, dni)
+    # ensure that closure relationship remains valid
+    dhi = np.where(bad_values, ghi, dhi)
+
+    data = OrderedDict()
+    data['dni'] = dni
+    data['dhi'] = dhi
+    data['kt'] = kt
+
+    if isinstance(datetime_or_doy, pd.DatetimeIndex):
+        data = pd.DataFrame(data, index=datetime_or_doy)
+
+    return data
+
+
+def boland(ghi, solar_zenith, datetime_or_doy, a_coeff=8.645, b_coeff=0.613,
+           min_cos_zenith=0.065, max_zenith=87):
+    r"""
+    Estimate DNI and DHI from GHI using the Boland clearness index model.
+
+    The Boland model [1]_, [2]_ estimates the diffuse fraction, DF, from global
+    horizontal irradiance, GHI, through an empirical relationship between DF
+    and the clearness index, :math:`k_t`, the ratio of GHI to horizontal
+    extraterrestrial irradiance.
+
+    .. math::
+
+        \mathit{DF} = \frac{1}{1 + \exp\left(a \left(k_t - b\right)\right)}
+
+
+    Parameters
+    ----------
+    ghi: numeric
+        Global horizontal irradiance. [W/m^2]
+    solar_zenith: numeric
+        True (not refraction-corrected) zenith angles in decimal degrees.
+    datetime_or_doy : numeric, pandas.DatetimeIndex
+        Day of year or array of days of year e.g.
+        pd.DatetimeIndex.dayofyear, or pd.DatetimeIndex.
+    a_coeff : float, default 8.645
+        Logistic curve fit coefficient.
+    b_coeff : float, default 0.613
+        Logistic curve fit coefficient.
+    min_cos_zenith : numeric, default 0.065
+        Minimum value of cos(zenith) to allow when calculating global
+        clearness index :math:`k_t`. Equivalent to zenith = 86.273 degrees.
+    max_zenith : numeric, default 87
+        Maximum value of zenith to allow in DNI calculation. DNI will be
+        set to 0 for times with zenith values greater than `max_zenith`.
+
+    Returns
+    -------
+    data : OrderedDict or DataFrame
+        Contains the following keys/columns:
+
+            * ``dni``: the modeled direct normal irradiance in W/m^2.
+            * ``dhi``: the modeled diffuse horizontal irradiance in
+              W/m^2.
+            * ``kt``: Ratio of global to extraterrestrial irradiance
+              on a horizontal plane.
+
+    References
+    ----------
+    .. [1] J. Boland, B. Ridley (2008) Models of Diffuse Solar Fraction. In:
+       Badescu V. (eds) Modeling Solar Radiation at the Earth’s Surface.
+       Springer, Berlin, Heidelberg. :doi:`10.1007/978-3-540-77455-6_8`
+    .. [2] John Boland, Lynne Scott, and Mark Luther, Modelling the diffuse
+       fraction of global solar radiation on a horizontal surface,
+       Environmetrics 12(2), pp 103-116, 2001,
+       :doi:`10.1002/1099-095X(200103)12:2%3C103::AID-ENV447%3E3.0.CO;2-2`
+
+    See also
+    --------
+    dirint
+    disc
+    erbs
+    orgill_hollands
+
+    Notes
+    -----
+    Boland diffuse fraction differs from other decomposition algorithms by use
+    of a logistic function to fit the entire range of clearness index,
+    :math:`k_t`. Parameters ``a_coeff`` and ``b_coeff`` are reported in [2]_
+    for different time intervals:
+
+    * 15-minute: ``a = 8.645`` and ``b = 0.613``
+    * 1-hour:  ``a = 7.997`` and ``b = 0.586``
+    """
+
+    dni_extra = get_extra_radiation(datetime_or_doy)
+
+    kt = clearness_index(
+        ghi, solar_zenith, dni_extra, min_cos_zenith=min_cos_zenith,
+        max_clearness_index=1)
+
+    # Boland equation
+    df = 1.0 / (1.0 + np.exp(a_coeff * (kt - b_coeff)))
+    # NOTE: [2] has different coefficients, for different time intervals
+    # 15-min: df = 1 / (1 + exp(8.645 * (kt - 0.613)))
+    # 1-hour: df = 1 / (1 + exp(7.997 * (kt - 0.586)))
+
+    dhi = df * ghi
+
+    dni = (ghi - dhi) / tools.cosd(solar_zenith)
+    bad_values = (solar_zenith > max_zenith) | (ghi < 0) | (dni < 0)
     dni = np.where(bad_values, 0, dni)
     # ensure that closure relationship remains valid
     dhi = np.where(bad_values, ghi, dhi)
@@ -3013,3 +3337,64 @@ def complete_irradiance(solar_zenith,
                                      'dhi': dhi,
                                      'dni': dni})
     return component_sum_df
+
+
+def louche(ghi, solar_zenith, datetime_or_doy, max_zenith=90):
+    """
+    Determine DNI and DHI from GHI using the Louche model.
+
+    Parameters
+    ----------
+    ghi : numeric
+        Global horizontal irradiance. [W/m^2]
+
+    solar_zenith : numeric
+        True (not refraction-corrected) zenith angles in decimal
+        degrees. Angles must be >=0 and <=90.
+
+    datetime_or_doy : numeric, pandas.DatetimeIndex
+        Day of year or array of days of year e.g.
+        pd.DatetimeIndex.dayofyear, or pd.DatetimeIndex.
+
+    Returns
+    -------
+    data: OrderedDict or DataFrame
+        Contains the following keys/columns:
+
+            * ``dni``: the modeled direct normal irradiance in W/m^2.
+            * ``dhi``: the modeled diffuse horizontal irradiance in
+              W/m^2.
+            * ``kt``: Ratio of global to extraterrestrial irradiance
+              on a horizontal plane.
+
+    References
+    -------
+    .. [1] Louche A, Notton G, Poggi P, Simonnot G. Correlations for direct
+       normal and global horizontal irradiation on a French Mediterranean site.
+       Solar Energy 1991;46:261-6. :doi:`10.1016/0038-092X(91)90072-5`
+
+    """
+
+    I0 = get_extra_radiation(datetime_or_doy)
+
+    Kt = clearness_index(ghi, solar_zenith, I0)
+
+    kb = -10.627*Kt**5 + 15.307*Kt**4 - 5.205 * \
+        Kt**3 + 0.994*Kt**2 - 0.059*Kt + 0.002
+    dni = kb*I0
+    dhi = ghi - dni*tools.cosd(solar_zenith)
+
+    bad_values = (solar_zenith > max_zenith) | (ghi < 0) | (dni < 0)
+    dni = np.where(bad_values, 0, dni)
+    # ensure that closure relationship remains valid
+    dhi = np.where(bad_values, ghi, dhi)
+
+    data = OrderedDict()
+    data['dni'] = dni
+    data['dhi'] = dhi
+    data['kt'] = Kt
+
+    if isinstance(datetime_or_doy, pd.DatetimeIndex):
+        data = pd.DataFrame(data, index=datetime_or_doy)
+
+    return data
