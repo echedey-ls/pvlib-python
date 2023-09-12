@@ -164,8 +164,8 @@ plt.show()
 # -------------------------------
 # During the addition of this model, a question arose about its trustworthiness
 # so, in order to check the integrity of the implementation, we will
-# compare it against :py:func:`pvlib.pvsystem.sapm_spectral_loss` and
-# :py:func:`pvlib.atmosphere.first_solar`.
+# compare it against :py:func:`pvlib.spectrum.spectral_factor_sapm` and
+# :py:func:`pvlib.spectrum.spectral_factor_firstsolar`.
 # Former model needs the parameters that characterise a module, but which one?
 # We will take the mean of Sandia parameters `'A0', 'A1', 'A2', 'A3', 'A4'` for
 # the same material type.
@@ -189,15 +189,15 @@ for param in ("A0", "A1", "A2", "A3", "A4"):
 print(modules_aggregated)
 
 # Then apply the SAPM model and calculate introduced difference
-modifier_sapm_f1 = pvlib.pvsystem.sapm_spectral_loss(
+modifier_sapm_f1 = pvlib.spectrum.spectral_factor_sapm(
     airmass_absolute, modules_aggregated.loc["mean"]
 )
 poa_irrad_sapm_modified = poa_irrad["poa_global"] * modifier_sapm_f1
 poa_irrad_sapm_difference = poa_irrad["poa_global"] - poa_irrad_sapm_modified
 
-# atmosphere.first_solar model
+# spectrum.spectral_factor_firstsolar model
 first_solar_pw = 1.42  # Default for AM1.5 spectrum
-modifier_first_solar = pvlib.atmosphere.first_solar_spectral_correction(
+modifier_first_solar = pvlib.spectrum.spectral_factor_firstsolar(
     first_solar_pw, airmass_absolute, module_type="monosi"
 )
 poa_irrad_first_solar_mod = poa_irrad["poa_global"] * modifier_first_solar
@@ -216,12 +216,12 @@ plt.plot(
 plt.plot(
     datetimes,
     poa_irrad_sapm_difference.to_numpy(),
-    label="atmosphere.first_solar",
+    label="spectrum.spectral_factor_firstsolar",
 )
 plt.plot(
     datetimes,
     poa_irrad_first_solar_diff.to_numpy(),
-    label="pvsystem.sapm_spectral_loss",
+    label="pvlib.spectrum.spectral_factor_sapm",
 )
 plt.legend()
 plt.title("Introduced difference comparison of different models")
@@ -243,10 +243,14 @@ plt.scatter(
     ama, martin_ruiz_agg_modifier.to_numpy(), label="spectrum.martin_ruiz"
 )
 plt.scatter(
-    ama, modifier_sapm_f1.to_numpy(), label="pvsystem.sapm_spectral_loss"
+    ama,
+    modifier_sapm_f1.to_numpy(),
+    label="pvlib.spectrum.spectral_factor_sapm",
 )
 plt.scatter(
-    ama, modifier_first_solar.to_numpy(), label="atmosphere.first_solar"
+    ama,
+    modifier_first_solar.to_numpy(),
+    label="spectrum.spectral_factor_firstsolar",
 )
 plt.legend()
 plt.title("Introduced difference comparison of different models")
