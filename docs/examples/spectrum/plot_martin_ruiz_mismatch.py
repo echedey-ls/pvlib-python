@@ -28,8 +28,8 @@ How to use this correction factor to adjust the POA global irradiance.
 # -------------------------------------------------------
 #
 # Mismatch modifiers are applied to the irradiance components, so first
-# step is to get them. We define an hypothetical POA surface and use TMY to
-# compute sky diffuse, ground reflected and direct irradiance.
+# step is to get them. We define an hypothetical POA surface and use a TMY to
+# compute sky diffuse, ground reflected and direct irradiances.
 
 import os
 
@@ -125,7 +125,7 @@ spectral_modifiers = pvlib.spectrum.martin_ruiz(
 # ``poa_diffuse``, so we should update the dataframe afterwards.
 
 poa_irrad_modified = poa_irrad * spectral_modifiers
-# Above line is equivalent to:
+# Line above is equivalent to:
 # poa_irrad_modified = pd.DataFrame()
 # for component in ('poa_direct', 'poa_sky_diffuse', 'poa_ground_diffuse'):
 #     poa_irrad_modified[component] = (poa_irrad[component]
