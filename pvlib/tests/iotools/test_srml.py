@@ -42,8 +42,8 @@ def test_read_srml_map_variables_false():
 
 def test_read_srml_nans_exist():
     data = srml.read_srml(srml_testfile)
-    assert isnan(data['dni_0'][1119])
-    assert data['dni_0_flag'][1119] == 99
+    assert isnan(data['dni_0'].iloc[1119])
+    assert data['dni_0_flag'].iloc[1119] == 99
 
 
 @pytest.mark.parametrize('url,year,month', [
@@ -146,7 +146,7 @@ def test_get_srml_minute():
     expected_index = pd.date_range(start='2018-01-01', end='2018-01-31 23:59',
                                    freq='1min', tz='Etc/GMT+8')
     assert_index_equal(data_get.index, expected_index)
-    assert all([c in data_get.columns for c in data_read.columns])
+    assert all(c in data_get.columns for c in data_read.columns)
     # Check that all indices in example file are present in remote file
     assert data_read.index.isin(data_get.index).all()
     assert meta['station'] == 'EU'
