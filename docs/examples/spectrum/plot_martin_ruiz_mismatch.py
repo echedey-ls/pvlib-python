@@ -173,7 +173,7 @@ plt.show()
 # precipitable water. We assume the standard spectrum, `1.42 cm`.
 
 # Retrieve modules and select the subset we want to work with the SAPM model
-module_type = "mc-Si"  # Equivalent to monosi
+module_type = "c-Si"  # Equivalent to monosi
 sandia_modules = pvlib.pvsystem.retrieve_sam(name="SandiaMod")
 modules_subset = sandia_modules.loc[
     :, sandia_modules.loc["Material"] == module_type
