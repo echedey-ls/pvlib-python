@@ -395,6 +395,8 @@ def martin_ruiz(clearness_index, airmass_absolute, module_type=None,
         modifiers[irrad_type] = modifier
 
     return modifiers
+
+
 def spectral_factor_firstsolar(precipitable_water, airmass_absolute,
                                module_type=None, coefficients=None,
                                min_precipitable_water=0.1,
