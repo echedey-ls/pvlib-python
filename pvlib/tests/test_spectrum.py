@@ -3,6 +3,7 @@ from numpy.testing import assert_allclose, assert_approx_equal, assert_equal
 import pandas as pd
 import numpy as np
 from pvlib import spectrum
+import scipy.integrate
 
 from .conftest import DATA_DIR, assert_series_equal
 
@@ -136,6 +137,42 @@ def test_get_am15g():
     e = spectrum.get_am15g(wavelength)
     assert_equal(len(e), len(wavelength))
     assert_allclose(e, expected, rtol=1e-6)
+
+
+def test_get_astmg173():
+    # tests get_astmg173
+    expected_columns = {"extraterrestrial", "global", "direct"}
+    am15 = spectrum.get_astmg173()
+    assert am15.index.name == "wavelength"
+    assert set(am15.columns) == expected_columns
+    assert_approx_equal(
+        scipy.integrate.trapezoid(am15["extraterrestrial"], am15.index),
+        1347.93432
+    )
+    assert_approx_equal(
+        scipy.integrate.trapezoid(am15["global"], am15.index),
+        1000.37065
+    )
+    assert_approx_equal(
+        scipy.integrate.trapezoid(am15["direct"], am15.index),
+        900.13933
+    )
+    wavelengths = np.array([270, 300, 400, 500, 600, 700, 5000])  # nanometers
+    am15_interp = spectrum.get_astmg173(wavelengths)
+    assert am15_interp.index.name == "wavelength"
+    assert set(am15_interp.columns) == expected_columns
+    assert_allclose(
+        am15_interp["extraterrestrial"],
+        [0.0, 0.45794, 1.6885, 1.916, 1.77, 1.422, 0.0],
+    )
+    assert_allclose(
+        am15_interp["global"],
+        [0.0, 0.0010205, 1.1141, 1.5451, 1.4753, 1.2823, 0.0],
+    )
+    assert_allclose(
+        am15_interp["direct"],
+        [0.0, 0.00045631, 0.83989, 1.3391, 1.3278, 1.1636, 0.0],
+    )
 
 
 def test_calc_spectral_mismatch_field(spectrl2_data):

@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 import os
+from functools import partial
 
 from warnings import warn
 
@@ -138,6 +139,88 @@ def get_am15g(wavelength=None):
     am15g.name = 'am15g'
 
     return am15g
+
+
+def get_astmg173(wavelengths=None):
+    r"""
+    Read the ASTM-G-173-03 dataset as a pandas dataframe.
+    Irradiance can optionally be interpolated linearly at given
+    ``wavelengths``.
+
+    The ASTM-G-173-03 dataset provides solar spectral irradiance values for the
+    extraterrestrial, global, and direct components on a 37-degrees tilted
+    surface [2]_.
+
+    .. versionadded:: 0.11.0
+
+    Parameters
+    ----------
+    wavelengths : numeric, optional
+        A 1D numeric array or list of wavelengths (in nanometers) at which to interpolate
+        irradiance values. If not provided, the dataset is returned as is.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A dataframe containing the ASTM-G-103-03 dataset with the following
+        columns:
+            - 'extraterrestrial': Extraterrestrial irradiance
+            - 'global': Global POA irradiance
+            - 'direct': Direct POA irradiance
+        Irradiance values in :math:`{W/m^2}/{nm}`.
+
+    Notes
+    -----
+    - If ``wavelengths`` is provided, the irradiance values are interpolated
+      **linearly** at the specified wavelengths. Values outside the spectra
+      limits :math:`[280, 4000] nm` are filled with zeroes.
+    - Datafile values bundled in PVLIB are distributed by the NREL in [1]_.
+
+    Examples
+    --------
+    >>> am15 = pvlib.spectrum.get_astmg173()
+    >>> print(am15.head())
+                extraterrestrial        global        direct
+    wavelength
+    280.0                  0.082  4.730900e-23  2.536100e-26
+    280.5                  0.099  1.230700e-21  1.091700e-24
+    281.0                  0.150  5.689500e-21  6.125300e-24
+    281.5                  0.212  1.566200e-19  2.747900e-22
+    282.0                  0.267  1.194600e-18  2.834600e-21
+
+    >>> wavelengths = np.array([300, 400, 500, 600, 700])  # nanometers
+    >>> am15_interp = pvlib.spectrum.get_astmg173(wavelengths)
+    >>> print(am15_interp.head())
+                extraterrestrial   global    direct
+    wavelength
+    300                  0.45794  0.00102  0.000456
+    400                  1.68850  1.11410  0.839890
+    500                  1.91600  1.54510  1.339100
+    600                  1.77000  1.47530  1.327800
+    700                  1.42200  1.28230  1.163600
+
+    References
+    ----------
+    .. [1] “Reference Air Mass 1.5 Spectra,” www.nrel.gov.
+       https://www.nrel.gov/grid/solar-resource/spectra-am1.5.html
+    .. [2] ASTM "G173-03 Standard Tables for Reference Solar Spectral
+       Irradiances: Direct Normal and Hemispherical on 37° Tilted Surface."
+    """
+    filepath = os.path.join(pvlib.__path__[0], "data", "ASTM-G-173-03.csv")
+    am15_df = pd.read_csv(filepath, index_col=0)
+
+    if wavelengths is not None:
+        # interpolate values using numpy
+        interpolator = partial(
+            np.interp, wavelengths, am15_df.index, left=0.0, right=0.0
+        )
+        am15_df = pd.DataFrame(
+            data={col: interpolator(am15_df[col]) for col in am15_df.columns},
+            index=wavelengths,
+        )
+        am15_df.index.name = "wavelength"
+
+    return am15_df
 
 
 def calc_spectral_mismatch_field(sr, e_sun, e_ref=None):
