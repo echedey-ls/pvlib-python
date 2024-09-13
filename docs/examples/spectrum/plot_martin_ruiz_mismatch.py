@@ -38,6 +38,8 @@ import pvlib
 from scipy import stats
 import pandas as pd
 
+from matplotlib.dates import AutoDateLocator, ConciseDateFormatter
+
 surface_tilt = 40
 surface_azimuth = 180  # Pointing South
 
@@ -226,6 +228,10 @@ plt.plot(
 plt.legend()
 plt.title("Introduced difference comparison of different models")
 plt.ylabel("POA Global Irradiance Difference [W/m²]")
+# Configure the x-axis to show xlabels well
+plt.gca().xaxis.set_major_formatter(
+    ConciseDateFormatter(AutoDateLocator(), tz=datetimes.tz)
+)
 plt.grid()
 plt.show()
 
