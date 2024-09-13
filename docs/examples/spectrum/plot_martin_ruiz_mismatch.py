@@ -158,6 +158,10 @@ plt.plot(datetimes, poa_irrad_modified["poa_global"].to_numpy())
 plt.plot(datetimes, poa_irrad_global_diff.to_numpy())
 plt.legend(["Incident", "Modified", "Difference"])
 plt.ylabel("POA Global irradiance [W/m²]")
+# Configure the x-axis to show xlabels well
+plt.gca().xaxis.set_major_formatter(
+    ConciseDateFormatter(AutoDateLocator(), tz=datetimes.tz)
+)
 plt.grid()
 plt.show()
 
