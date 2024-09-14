@@ -109,7 +109,7 @@ par["diffuse"] = par["total"] * par["diffuse_fraction"]
 
 fig, ax_l = plt.subplots(figsize=(12, 6))
 ax_l.set(
-    xlabel="Time",
+    xlabel="Day of month",
     ylabel="Daily insolation $[Wh/m^2/day]$",
     title="Diffuse PAR using Spitter's relationship",
 )
