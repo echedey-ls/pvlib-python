@@ -137,7 +137,7 @@ shaded_fraction = pvlib.shading.shaded_fraction1d(
 #
 # - 1 bypass diode: 1 block
 # - 3 bypass diodes: 3 blocks in landscape; 1 in portrait
-# - 3 bypass diodes half-cut cells:
+# - 3 bypass diodes in half-cut cell modules:
 #   - 2 blocks in portrait
 #   - 3 blocks in landscape
 #
@@ -146,10 +146,10 @@ shaded_fraction = pvlib.shading.shaded_fraction1d(
 #    :width: 75%
 #    :alt: Normal and half-cut cells module layouts
 #
-#    Left: common module layout. Right: half-cut cells module layout.
-#    Each module has three bypass diodes. On the left, they connect cell
-#    columns 1-2, 2-3 & 3-4. On the right, they connect cell columns 1-2, 3-4 &
-#    5-6.
+#    Left: common 36-cell module layout. Right: half-cut cells module layout.
+#    On the left, two bypass diodes connect cell columns 1-2 & 3-4 at the top
+#    bus ribbons. On the right, three bypass diodes connect cell columns 1-2,
+#    3-4 & 5-6 at the middle bus ribbons.
 #    *Source: César Domínguez. CC BY-SA 4.0, Wikimedia Commons*
 #
 # In the image above, each orange U-shaped string section is a block.

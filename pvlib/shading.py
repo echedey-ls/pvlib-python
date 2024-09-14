@@ -627,11 +627,14 @@ def direct_martinez(
     Many manufacturers don't specify this information explicitly.
     However, these values can be inferred from:
 
-    - the number of bypass diodes
+    - the number of bypass diodes if it's known
+    - the number of cells: there's usually one bypass diode per 12 to 24 cells
+    - how many U-shaped strings of series cells exist in the module, since
+      it's easier to connect a bypass diode to near the same bus ribbon
     - where and how many junction boxes are present on the back of the module
     - whether or not the module is comprised of *half-cut cells*
 
-    The latter two are heavily correlated.
+    These factors are heavily correlated.
 
     For example:
 
