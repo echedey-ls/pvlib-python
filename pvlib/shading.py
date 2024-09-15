@@ -585,7 +585,7 @@ def direct_martinez(
         Number of blocks affected by the shadow. [Unitless].
         If a floating point number is provided, it will be rounded up.
     total_blocks : int
-        Number of total blocks. Unitless.
+        Number of total blocks. [Unitless].
 
     Returns
     -------
