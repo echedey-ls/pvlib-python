@@ -377,33 +377,33 @@ def shaded_fraction1d(
     Parameters
     ----------
     solar_zenith : numeric
-        Solar zenith angle, in degrees.
+        Solar zenith angle. [Degrees].
     solar_azimuth : numeric
-        Solar azimuth angle, in degrees.
+        Solar azimuth angle. [Degrees].
     axis_azimuth : numeric
-        Axis azimuth of the rotation axis of a tracker, in degrees.
+        Axis azimuth of the rotation axis of a tracker. [Degrees].
         Fixed-tilt arrays can be considered as a particular case of a tracker.
-        North=0º, South=180º, East=90º, West=270º.
+        North=0°, South=180°, East=90°, West=270°.
     shaded_row_rotation : numeric
         Right-handed rotation of the row receiving the shade, with respect
-        to ``axis_azimuth``. In degrees :math:`^{\circ}`.
+        to ``axis_azimuth``. [Degrees].
     collector_width : numeric
         Vertical length of a tilted row. The returned ``shaded_fraction``
         is the ratio of the shadow over this value.
     pitch : numeric
         Axis-to-axis horizontal spacing of the row.
     axis_tilt : numeric, default 0
-        Tilt of the rows axis from horizontal. In degrees :math:`^{\circ}`.
+        Tilt of the rows axis from horizontal. [Degrees].
     surface_to_axis_offset : numeric, default 0
         Distance between the rotating axis and the collector surface.
         May be used to account for a torque tube offset.
     cross_axis_slope : numeric, default 0
         Angle of the plane containing the rows' axes from
         horizontal. Right-handed rotation with respect to the rows axes.
-        In degrees :math:`^{\circ}`.
+        [Degrees].
     shading_row_rotation : numeric, optional
         Right-handed rotation of the row casting the shadow, with respect
-        to the row axis. In degrees :math:`^{\circ}`.
+        to the row axis. [Degrees].
 
     Returns
     -------
@@ -428,15 +428,15 @@ def shaded_fraction1d(
     +==================+============================+=====================+
     | :math:`\theta_1` | ``shading_row_rotation``   |                     |
     +------------------+----------------------------+                     |
-    | :math:`\theta_2` | ``shaded_row_rotation``    | Degrees             |
-    +------------------+----------------------------+ :math:`^{\circ}`    |
+    | :math:`\theta_2` | ``shaded_row_rotation``    | Degrees [°]         |
+    +------------------+----------------------------+                     |
     | :math:`\beta_c`  | ``cross_axis_slope``       |                     |
     +------------------+----------------------------+---------------------+
-    | :math:`p`        | ``pitch``                  | Any consistent      |
-    +------------------+----------------------------+ length unit across  |
-    | :math:`\ell`     | ``collector_width``        | all these           |
-    +------------------+----------------------------+ parameters, e.g.    |
-    | :math:`z_0`      | ``surface_to_axis_offset`` | :math:`m`.          |
+    | :math:`p`        | ``pitch``                  |                     |
+    +------------------+----------------------------+ Same for all        |
+    | :math:`\ell`     | ``collector_width``        | these parameters,   |
+    +------------------+----------------------------+ e.g. [m]            |
+    | :math:`z_0`      | ``surface_to_axis_offset`` |                     |
     +------------------+----------------------------+---------------------+
     | :math:`f_s`      | Return value               | Dimensionless       |
     +------------------+----------------------------+---------------------+
