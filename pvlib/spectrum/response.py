@@ -98,22 +98,22 @@ def sr_to_qe(sr, wavelength=None, normalize=False):
     Parameters
     ----------
     sr : numeric, pandas.Series or pandas.DataFrame
-        Spectral response, [A/W].
-        Index must be the wavelength in nanometers, [nm].
+        Spectral response. [A/W].
+
+        If ``wavelength`` is not provided, index must be the wavelength in nanometers, [nm].
 
     wavelength : numeric, optional
         Points where spectral response is measured, in nanometers, [nm].
 
     normalize : bool, default False
-        If True, the quantum efficiency is normalized so that the maximum value
-        is 1.
+        If ``True``, the quantum efficiency is normalized so that the maximum value is 1.
         For ``pandas.DataFrame``, normalization is done for each column.
         For 2D arrays, normalization is done for each sub-array.
 
     Returns
     -------
     quantum_efficiency : numeric, same type as ``sr``
-        Quantum efficiency, in the interval [0, 1].
+        Quantum efficiency, [unitless].
 
     Notes
     -----
@@ -197,15 +197,15 @@ def qe_to_sr(qe, wavelength=None, normalize=False):
     Parameters
     ----------
     qe : numeric, pandas.Series or pandas.DataFrame
-        Quantum efficiency.
-        If pandas subtype, index must be the wavelength in nanometers, [nm].
+        Quantum efficiency. [unitless].
+
+        If ``wavelength`` is not provided, index must be the wavelength in nanometers, [nm].
 
     wavelength : numeric, optional
         Points where quantum efficiency is measured, in nanometers, [nm].
 
     normalize : bool, default False
-        If True, the spectral response is normalized so that the maximum value
-        is 1.
+        If ``True``, the spectral response is normalized so that the maximum value is 1.
         For ``pandas.DataFrame``, normalization is done for each column.
         For 2D arrays, normalization is done for each sub-array.
 
