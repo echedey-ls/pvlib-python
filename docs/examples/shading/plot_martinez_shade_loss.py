@@ -260,10 +260,6 @@ fig.show()
 # Note how the half-cut cell module in portrait performs better than the
 # normal module with three bypass diodes. This is because the number of shaded
 # blocks is less along the shaded length is higher in the half-cut module.
-#
-# Also note that the landscape half-cut cell module has a lower power loss
-# than the portrait counterpart. This happens because there are more blocks
-# that can be completely unshaded.
 
 # %%
 # References
