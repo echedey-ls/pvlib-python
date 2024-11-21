@@ -358,12 +358,14 @@ def shaded_fraction1d(
     shading_row_rotation=None,
 ):
     r"""
-    Shaded fraction in the vertical dimension of tilted rows, or perpendicular
-    to the axis of horizontal rows.
+    Shaded fraction in the vertical dimension of tilted rows, or
+    perpendicular to the axis of horizontal rows.
 
     If ``shading_row_rotation`` isn't provided, it is assumed that
     both the shaded row and the shading row (the one blocking the
-    direct beam) have the same rotation and azimuth values.
+    direct beam) have the same rotation angle.
+
+    Both rows are assumed to be parallel.
 
     .. warning::
         The function assumes that the roles of the shaded and shading rows
@@ -404,6 +406,9 @@ def shaded_fraction1d(
     shading_row_rotation : numeric, optional
         Right-handed rotation of the row casting the shadow, with respect
         to the row axis. [Degrees].
+
+        If not provided, it is assumed that the shading row has the same
+        rotation as the shaded row.
 
     Returns
     -------
