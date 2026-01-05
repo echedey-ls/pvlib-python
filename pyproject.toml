@@ -101,6 +101,8 @@ exclude = [
     '__pycache__',
     # Virtual environment folders (same as in .gitignore)
     'venv', 'env',
+    # Documentation build output copies examples files for their download
+    'docs/sphinx/build',
 ]
 
 [tool.setuptools]
