@@ -77,12 +77,31 @@ test = [
     'pytest-remotedata',
     'packaging',
 ]
-all = ["pvlib[test,optional,doc]"]
+lint = [
+    "flake8",
+    "Flake8-pyproject",
+]
+all = ["pvlib[optional,doc,test,lint]"]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/pvlib/pvlib-python/issues"
 Documentation = "https://pvlib-python.readthedocs.io/"
 "Source Code" = "https://github.com/pvlib/pvlib-python"
+
+[tool.flake8]
+ignore = ['E201','E241','E226','W503','W504']
+per-file-ignores = [
+    '__init__.py:F401',
+]
+max-line-length = 79
+exclude = [
+    # No need to traverse git directory
+    '.git',
+    # There's no value in checking cache directories
+    '__pycache__',
+    # Virtual environment folders (same as in .gitignore)
+    'venv', 'env',
+]
 
 [tool.setuptools]
 # do not include all non-python files in the bdist by default, but select them manually
