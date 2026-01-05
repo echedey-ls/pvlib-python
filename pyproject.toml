@@ -89,7 +89,13 @@ Documentation = "https://pvlib-python.readthedocs.io/"
 "Source Code" = "https://github.com/pvlib/pvlib-python"
 
 [tool.flake8]
-ignore = ['E201','E241','E226','W503','W504']
+ignore = [
+    'E201',  # Whitespace after '('
+    'E241',  # Multiple spaces after ','
+    'E226',  # Missing whitespace around arithmetic operator
+    'W503',  # Line break occurred before a binary operator
+    'W504',  # Line break occurred after a binary operator
+]
 per-file-ignores = [
     '__init__.py:F401',
 ]
