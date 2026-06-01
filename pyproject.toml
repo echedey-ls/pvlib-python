@@ -78,8 +78,7 @@ test = [
     'packaging',
 ]
 lint = [
-    "flake8",
-    "Flake8-pyproject",
+    "ruff~=0.15.15",
 ]
 all = ["pvlib[optional,doc,test,lint]"]
 
