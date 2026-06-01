@@ -402,9 +402,9 @@ NUTATION_YTERM_ARRAY = np.array([
 @jcompile('float64(int64, int64, int64, int64, int64, int64, int64)',
           nopython=True)
 def julian_day_dt(year, month, day, hour, minute, second, microsecond):
-    """This is the original way to calculate the julian day from the NREL paper.
-    However, it is much faster to convert to unix/epoch time and then convert
-    to julian day. Note that the date must be UTC."""
+    """This is the original way to calculate the julian day from the NREL
+    paper. However, it is much faster to convert to unix/epoch time and then
+    convert to julian day. Note that the date must be UTC."""
     if month <= 2:
         year = year-1
         month = month+12
@@ -472,8 +472,8 @@ def heliocentric_longitude(jme):
 
     l_rad = (l0 + l1 * jme + l2 * jme**2 + l3 * jme**3 + l4 * jme**4 +
              l5 * jme**5)/10**8
-    l = np.rad2deg(l_rad)
-    return l % 360
+    l_deg = np.rad2deg(l_rad)
+    return l_deg % 360
 
 @jcompile('float64(float64)', nopython=True)
 def heliocentric_latitude(jme):
