@@ -1,0 +1,11 @@
+name: Lint Python code
+on:
+  pull_request:
+jobs:
+  flake8-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v4.0.0
+        # https://github.com/astral-sh/ruff-action
