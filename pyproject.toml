@@ -77,12 +77,50 @@ test = [
     'pytest-remotedata',
     'packaging',
 ]
-all = ["pvlib[test,optional,doc]"]
+lint = [
+    "ruff~=0.15.15",
+]
+all = ["pvlib[optional,doc,test,lint]"]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/pvlib/pvlib-python/issues"
 Documentation = "https://pvlib-python.readthedocs.io/"
 "Source Code" = "https://github.com/pvlib/pvlib-python"
+
+[tool.ruff]
+line-length = 79
+exclude = [
+    # speed up .py files discovery
+    '.git',
+    'build',  # created during local packaging
+    # cache directories
+    '__pycache__',
+    # Virtual environment folders (same as in .gitignore)
+    'venv', 'env',
+    # built documentation generates .py examples files for their download, skip them
+    'docs/sphinx/build',
+    'docs/sphinx/source/gallery',
+    # .ipynb outdated tutorials
+    'docs/tutorials/',
+]
+
+[tool.ruff.lint]
+ignore = [
+    'E201',  # Whitespace after '('
+    'E241',  # Multiple spaces after ','
+    'E226',  # Missing whitespace around arithmetic operator
+]
+per-file-ignores = {
+    '**/__init__.py' = ['F401'],  # imported but unused
+    # the following ignored rules allow for tabular data in the tests (mostly)
+    'tests/**/test_*.py' = [
+        'E203',  # whitespace before ','
+        'E202',  # whitespace before ']'
+        'E231',  # missing whitespace after {',', ':'}
+    ],  
+    # gallery examples also divert from standard style
+    'docs/examples/**/*.py' = ['E402'],  # module level import not at top of file
+}
 
 [tool.setuptools]
 # do not include all non-python files in the bdist by default, but select them manually
