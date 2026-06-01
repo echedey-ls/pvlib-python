@@ -263,7 +263,7 @@ def test_lookup_linke_turbidity_nointerp_months():
 
 
 def test_haurwitz():
-    apparent_solar_elevation = np.array([-20, -0.05, -0.001, 5, 10, 30, 50, 90])
+    apparent_solar_elevation = np.array([-20, -0.05, -0.001, 5, 10, 30, 50, 90])  # noqa: E501
     apparent_solar_zenith = 90 - apparent_solar_elevation
     data_in = pd.DataFrame(data=apparent_solar_zenith,
                            index=apparent_solar_zenith,
@@ -572,7 +572,8 @@ def test_clearsky_get_threshold_raises_error():
         clearsky._clearsky_get_threshold(0.5)
 
 
-def test_detect_clearsky_calls_threshold(mocker, detect_clearsky_threshold_data):
+def test_detect_clearsky_calls_threshold(mocker,
+                                         detect_clearsky_threshold_data):
     threshold_spy = mocker.spy(clearsky, '_clearsky_get_threshold')
     expected, cs = detect_clearsky_threshold_data
     _ = clearsky.detect_clearsky(expected['GHI'], cs['ghi'],
@@ -892,5 +893,7 @@ def test_bird():
     # XXX: testdata starts at 1am so noon is at index = 11
     np.allclose(
         [Eb3, Ebh3, Gh3, Dh3],
-        testdata2[['Direct Beam', 'Direct Hz', 'Global Hz', 'Dif Hz']].iloc[11],
+        testdata2[
+            ['Direct Beam', 'Direct Hz', 'Global Hz', 'Dif Hz']
+        ].iloc[11],
         rtol=1e-3)

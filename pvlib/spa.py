@@ -402,9 +402,9 @@ NUTATION_YTERM_ARRAY = np.array([
 @jcompile('float64(int64, int64, int64, int64, int64, int64, int64)',
           nopython=True)
 def julian_day_dt(year, month, day, hour, minute, second, microsecond):
-    """This is the original way to calculate the julian day from the NREL paper.
-    However, it is much faster to convert to unix/epoch time and then convert
-    to julian day. Note that the date must be UTC."""
+    """This is the original way to calculate the julian day from the NREL
+    paper. However, it is much faster to convert to unix/epoch time and then
+    convert to julian day. Note that the date must be UTC."""
     if month <= 2:
         year = year-1
         month = month+12
