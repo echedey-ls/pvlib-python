@@ -115,7 +115,6 @@ import textwrap
 import warnings
 
 import importlib
-from types import FunctionType
 import inspect
 
 if importlib.metadata.version('numpy') >= "2":
