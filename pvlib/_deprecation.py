@@ -114,6 +114,97 @@ import functools
 import textwrap
 import warnings
 
+import importlib
+from types import FunctionType
+import inspect
+
+if importlib.metadata.version('numpy') >= "2":
+    import numpy as np
+
+    class _pvlibDeprecationsRecorder:
+        # utility made by @echedey-ls to dynamically retrieve a list of deprecated features
+        # made for pvlib in 2026-06
+        # uses numpy~=2.0
+        @property
+        def identifiers(self, match=None):
+            if match:
+                # TODO(Echedey): filter and return matches
+                pass
+            return self._ids
+
+        @property
+        def types(self, match=None):
+            if match:
+                # TODO(Echedey): filter and return matches
+                pass
+            return self._types
+
+        @property
+        def messages(self, match=None):
+            if match:
+                # TODO(Echedey): filter and return matches
+                pass
+            return self._msgs
+
+        @property
+        def versions(self, match=None):
+            if match:
+                # TODO(Echedey): filter and return matches
+                pass
+            return self._vers
+
+        def __init__(self):
+            self._ids = np.empty(0, dtype=np.dtypes.StringDType())
+            self._types = np.empty(0, dtype=np.dtypes.StringDType())
+            self._msgs = np.empty(0, dtype=np.dtypes.StringDType())
+            self._vers = np.empty(0, dtype=np.dtypes.StringDType())
+
+        def __repr__(self):
+            if len(self._ids) == 0:
+                return "There are no features pending deprecations"
+            max_lens = [10, 4, 7, 7]  # header min values, see below assignment to 'header'
+            for _id, _type, _msg, _ver in zip(
+                self._ids,
+                self._types,
+                self._msgs,
+                self._vers,
+            ):
+                max_lens[0] = max(max_lens[0], len(_id))
+                max_lens[1] = max(max_lens[1], len(_type))
+                max_lens[2] = max(max_lens[2], len(_msg))
+                max_lens[3] = max(max_lens[3], len(_ver))
+            out = f"{'Identifier': <{max_lens[0]}} | {'Type': <{max_lens[1]}} | {'Message': <{max_lens[2]}} | {'Version': <{max_lens[3]}}"
+            out += "\n" + "=" * len(out) + "\n"
+            for i in range(len(self._ids)):
+                out += f"{self._ids[i]: <{max_lens[0]}} | {self._types[i]: <{max_lens[1]}} | {self._msgs[i]: <{max_lens[2]}} | {self._vers[i]: <{max_lens[3]}}\n"
+            out += "\n"
+            out += f"There are {len(self._ids)} deprecations currently."
+            return out
+
+        def register(self, obj, kind, message, version):
+            """
+            TODO(Echedey): Write docstring
+            """
+            assert isinstance(kind, str) and isinstance(message, str) and isinstance(version, str)
+            if inspect.ismodule(obj):
+                obj_type = "module"
+            elif inspect.isclass(obj):
+                obj_type = "class"
+            elif inspect.isfunction(obj):
+                obj_type = "function"
+            else:
+                warn_msg = f"Unable to identify type of object being deprecated: {obj}."
+                warnings.warn(warn_msg, stacklevel=2)
+            obj_identifier = obj.__module__ + "." + obj.__qualname__
+
+            self._ids = np.append(self._ids, obj_identifier)
+            self._types = np.append(self._types, obj_type)
+            self._msgs = np.append(self._msgs, message)
+            self._vers = np.append(self._vers, version)
+
+
+deprecations_recorder = _pvlibDeprecationsRecorder()
+
 
 class pvlibDeprecationWarning(UserWarning):
     """A class for issuing deprecation warnings for pvlib users.
@@ -303,6 +394,17 @@ def deprecated(since, message='', name='', alternative='', pending=False,
             warnings.warn(message, category, stacklevel=2)
             return func(*args, **kwargs)
 
+        deprecations_recorder.register(
+            obj=obj,
+            kind="deprecated",
+            message=(
+                f"with alternative '{alternative}'"
+                if alternative
+                else "without alternative"
+            ),
+            version=since,
+        )
+
         old_doc = textwrap.dedent(old_doc or '').strip('\n')
         message = message.strip()
         new_doc = (('\n.. deprecated:: %(since)s'
@@ -384,6 +486,13 @@ def renamed_kwarg_warning(since, old_param_name, new_param_name, removal=""):
                 )
                 kwargs[new] = kwargs.pop(old)
             return func(*args, **kwargs)
+
+        deprecations_recorder.register(
+            obj=func,
+            kind="parameter renamed",
+            message=f"'{old_param_name}' renamed to '{new_param_name}'",
+            version=since,
+        )
 
         wrapper = functools.wraps(func)(wrapper)
         return wrapper
