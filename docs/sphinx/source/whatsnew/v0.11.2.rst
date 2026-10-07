@@ -23,7 +23,7 @@ Bug Fixes
   (:issue:`1338`, :pull:`2227`)
 * Handle DST transitions that happen at midnight in :py:func:`pvlib.solarposition.hour_angle`
   (:issue:`2132` :pull:`2133`)
-* Change ``dni_extra`` to a required parameter in :py:func:`pvlib.irradiance.ghi_from_poa_driesse_2023`
+* Change ``dni_extra`` to a required parameter in :py:func:`!pvlib.irradiance.ghi_from_poa_driesse_2023`
   (:issue:`2279` :pull:`2331`)
 * :py:func:`~pvlib.spa.julian_day_dt` now accounts for the 10 day difference
   between Julian and Gregorian calendars prior to the year 1582. (:issue:`2077`, :pull:`2249`)

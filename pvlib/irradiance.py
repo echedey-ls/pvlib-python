@@ -1752,14 +1752,6 @@ def ghi_from_poa_driesse_2024(surface_tilt, surface_azimuth,
         return ghi
 
 
-ghi_from_poa_driesse_2023 = deprecated(
-    since="0.15.2",
-    name="pvlib.irradiance.ghi_from_poa_driesse_2023",
-    alternative="pvlib.irradiance.ghi_from_poa_driesse_2024",
-    removal="0.17.0",
-)(ghi_from_poa_driesse_2024)
-
-
 def clearsky_index(ghi, ghi_clear, max_clearsky_index=2.0):
     """
     Calculate the clearsky index.
