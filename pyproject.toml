@@ -13,7 +13,6 @@ requires-python = ">=3.11"
 dependencies = [
     'numpy >= 1.23.2',
     'pandas >= 1.5.0',
-    'pytz',
     'requests',
     'scipy >= 1.9.2',
     'h5py',
