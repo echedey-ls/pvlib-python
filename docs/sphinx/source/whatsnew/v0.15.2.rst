@@ -7,7 +7,7 @@ v0.15.2 (June 16, 2026)
 
 Deprecations
 ~~~~~~~~~~~~
-* Deprecate :py:attr:`pvlib.location.Location.pytz`.
+* Deprecate :py:attr:`!pvlib.location.Location.pytz`.
   Use :py:attr:`~pvlib.location.Location.tz` instead. (:issue:`2343`, :pull:`2757`)
 * Rename :py:func:`!pvlib.irradiance.ghi_from_poa_driesse_2023` to
   :py:func:`~pvlib.irradiance.ghi_from_poa_driesse_2024`. The year now reflects

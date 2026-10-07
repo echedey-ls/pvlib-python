@@ -419,9 +419,3 @@ def test_location_lookup_altitude(mocker):
     tus = Location(32.2, -111, 'US/Arizona')
     location.lookup_altitude.assert_called_once_with(32.2, -111)
     assert tus.altitude == location.lookup_altitude(32.2, -111)
-
-
-@fail_on_pvlib_version('0.17.0')
-def test_location_pytz_warning(some_location):
-    with pytest.warns(pvlibDeprecationWarning):
-        assert str(some_location.pytz) == 'US/Arizona'

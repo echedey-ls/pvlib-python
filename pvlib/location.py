@@ -9,7 +9,6 @@ import datetime
 import zoneinfo
 
 import pandas as pd
-import pytz
 import h5py
 
 from pvlib import solarposition, clearsky, atmosphere, irradiance
@@ -24,10 +23,6 @@ class Location:
     location. You can also assign a name to a location object.
 
     Location objects have a time-zone attribute ``tz`` (IANA timezone string).
-
-    .. deprecated:: 0.15.2
-
-       The ``pytz`` attribute is deprecated. Use ``tz`` instead.
 
     Location objects support the print method.
 
@@ -127,23 +122,6 @@ class Location:
                 "string, a whole-number int/float UTC offset, or a "
                 "datetime.tzinfo object (including subclasses)"
             )
-
-    @property
-    def pytz(self):  # pragma: no cover
-        """The location's pytz time zone (read only).
-
-        .. deprecated:: 0.15.2
-            The ``pytz`` attribute is deprecated. Use the ``tz`` property
-            instead.
-        """
-        warn_deprecated(
-            since='0.15.2',
-            removal='0.17.0',
-            name='pytz',
-            obj_type='attribute',
-            alternative='tz',
-        )
-        return pytz.timezone(str(self._zoneinfo))
 
     @classmethod
     def from_tmy(cls, tmy_metadata, tmy_data=None, **kwargs):

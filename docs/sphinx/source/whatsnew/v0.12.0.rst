@@ -6,7 +6,7 @@ v0.12.0 (March 19, 2025)
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
-* The :py:attr:`pvlib.location.Location.pytz` attribute is now read only. The
+* The :py:attr:`!pvlib.location.Location.pytz` attribute is now read only. The
   ``pytz`` attribute is now set internally to be consistent with the
   :py:attr:`pvlib.location.Location.tz` attribute. (:issue:`2340`, :pull:`2341`)
 * Users must now provide :py:attr:`ModelChain.spectral_model`, or the ``'no_loss'`` spectral
